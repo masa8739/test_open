@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Calendar</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #EEE;
+        }
+        .calendar {
+            width: 755px;
+            margin: 50px auto;
+            background-color: #EEE;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header button {
+            background-color: #D0D0D0;
+            border: none;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .days {
+            display: flex;
+            justify-content: space-around;
+            background-color: #EEE;
+        }
+        .days div {
+            width: 100px;
+            text-align: center;
+            padding: 5px;
+            font-weight: bold;
+        }
+        .dates {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+        }
+        .dates button {
+            width: 100px;
+            height: 70px;
+            background-color: white;
+            border: none;
+            font-size: 14px;
+            text-align: left;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .sunday {
+            color: red;
+        }
+        .saturday {
+            color: blue;
+        }
+        .holiday {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calendar">
+    <div class="header">
+        <button id="prev">Prev</button>
+        <div id="currentMonthYear" style="font-size: 24px;"></div>
+        <button id="next">Next</button>
+    </div>
+    <button id="toggleHolidays" style="margin: 10px;">Toggle Holidays</button>
+    <div class="days">
+        <div class="sunday">Sunday</div>
+        <div>Monday</div>
+        <div>Tuesday</div>
+        <div>Wednesday</div>
+        <div>Thursday</div>
+        <div>Friday</div>
+        <div class="saturday">Saturday</div>
+    </div>
+    <div class="dates" id="dates"></div>
+</div>
+
+<script>
+    // Japanese holidays for 2024
+    const holidays = {
+        '2024-01-01': 'New Year\'s Day',
+        '2024-01-08': 'Coming of Age Day',
+        '2024-02-11': 'National Foundation Day',
+        '2024-02-12': 'National Foundation Day (observed)',
+        '2024-03-20': 'Vernal Equinox Day',
+        '2024-04-29': 'Showa Day',
+        '2024-05-03': 'Constitution Memorial Day',
+        '2024-05-04': 'Greenery Day',
+        '2024-05-05': 'Children\'s Day',
+        '2024-05-06': 'Children\'s Day (observed)',
+        '2024-07-15': 'Marine Day',
+        '2024-08-11': 'Mountain Day',
+        '2024-08-12': 'Mountain Day (observed)',
+        '2024-09-16': 'Respect for the Aged Day',
+        '2024-09-22': 'Autumnal Equinox Day',
+        '2024-10-14': 'Sports Day',
+        '2024-11-03': 'Culture Day',
+        '2024-11-04': 'Culture Day (observed)',
+        '2024-11-23': 'Labor Thanksgiving Day',
+        '2024-12-23': 'Emperor\'s Birthday',
+    };
+
+    const today = new Date();
+    let currentYear = today.getFullYear();
+    let currentMonth = today.getMonth(); // 0-based index (Jan = 0)
+    let showHolidays = true; // State to toggle holiday display
+
+    function updateCalendar(year, month) {
+        const monthNames = ["January", "February", "March", "April", "May", "June", 
+                            "July", "August", "September", "October", "November", "December"];
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        document.getElementById('currentMonthYear').innerText = `${monthNames[month]} ${year}`;
+
+        const datesContainer = document.getElementById('dates');
+        datesContainer.innerHTML = '';  // Clear previous dates
+
+        // Fill in empty days before the first day of the month
+        for (let i = 0; i < firstDay; i++) {
+            const emptyCell = document.createElement('div');
+            datesContainer.appendChild(emptyCell);
+        }
+
+        // Add days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateButton = document.createElement('button');
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            dateButton.innerText = day;
+
+            if (showHolidays && holidays[dateStr]) {
+                dateButton.innerText += ` (${holidays[dateStr]})`;
+                dateButton.classList.add('holiday'); // Holiday color
+            }
+
+            const dayOfWeek = new Date(year, month, day).getDay();
+            if (dayOfWeek === 0) {
+                dateButton.classList.add('sunday'); // Sunday in red
+            } else if (dayOfWeek === 6) {
+                dateButton.classList.add('saturday'); // Saturday in blue
+            }
+
+            datesContainer.appendChild(dateButton);
+        }
+    }
+
+    document.getElementById('prev').addEventListener('click', () => {
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        updateCalendar(currentYear, currentMonth);
+    });
+
+    document.getElementById('next').addEventListener('click', () => {
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        updateCalendar(currentYear, currentMonth);
+    });
+
+    // Toggle holidays display
+    document.getElementById('toggleHolidays').addEventListener('click', () => {
+        showHolidays = !showHolidays;
+        updateCalendar(currentYear, currentMonth); // Update calendar to reflect change
+    });
+
+    // Initialize calendar
+    updateCalendar(currentYear, currentMonth);
+</script>
+
+</body>
+</html>

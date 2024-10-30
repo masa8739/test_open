@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Calendar</title>
+    <title>カレンダーと時間割</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -54,6 +54,12 @@
             text-align: left;
             padding: 10px;
             cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+        .dates button:hover {
+            transform: scale(1.05);
         }
         .sunday {
             color: red;
@@ -64,126 +70,508 @@
         .holiday {
             color: red;
         }
+        .today {
+            background-color: #FFEB3B;
+            font-weight: bold;
+            border: 2px solid #FFC107;
+            box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+        }
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 300px;
+            text-align: center;
+        }
+        .modal-content textarea, .modal-content input {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .modal-content textarea {
+            height: 100px;
+        }
+        .modal-content button {
+            margin-top: 10px;
+        }
+    
+
+        /* Timetable Styles */
+        .timetable-container {
+            max-width: 800px;
+            width: 100%;
+        }
+        table {
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .button {
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        #memoSection {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        #memoSection h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        #memoSection textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
 
-<div class="calendar">
-    <div class="header">
-        <button id="prev">Prev</button>
-        <div id="currentMonthYear" style="font-size: 24px;"></div>
-        <button id="next">Next</button>
+    <h1 style="text-align: center;">カレンダーと時間割</h1>
+    <div class="container">
+        <!-- Calendar Section -->
+        <div class="calendar">
+			<div class="header">
+				<button id="prev">Prev</button>
+				<div id="currentMonthYear" style="font-size: 24px;"></div>
+				<button id="next">Next</button>
+			</div>
+			<button id="toggleHolidays" style="margin: 10px;">Toggle Holidays</button>
+			<div class="days">
+				<div class="sunday">Sunday</div>
+				<div>Monday</div>
+				<div>Tuesday</div>
+				<div>Wednesday</div>
+				<div>Thursday</div>
+				<div>Friday</div>
+				<div class="saturday">Saturday</div>
+			</div>
+			<div class="dates" id="dates"></div>
+		</div>
+
+		<!-- Note modal -->
+		<div class="modal" id="noteModal">
+			<div class="modal-content">
+				<h2>Add/Edit Note</h2>
+				<input type="text" id="noteTitle" placeholder="Title">
+				<textarea id="noteContent" placeholder="Details"></textarea>
+				<button id="saveNote">Save</button>
+				<button id="closeModal">Close</button>
+			</div>
+		</div>
+
+        <!-- Timetable Section -->
+        <div class="timetable-container">
+            <table id="timetable">
+                <tr>
+                    <th>時限＼曜日</th>
+                    <th>月</th>
+                    <th>火</th>
+                    <th>水</th>
+                    <th>木</th>
+                    <th>金</th>
+                </tr>
+                <tr>
+                    <th>1限</th>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>2限</th>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>3限</th>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>4限</th>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>5限</th>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </table>
+            <button class="button" id="addClassButton">講義を追加</button>
+            <button class="button" id="deleteClassButton">講義を削除</button>
+
+            <div id="memoSection">
+                <h2>メモ</h2>
+                <textarea id="memo" placeholder="ここにメモを入力してください..."></textarea>
+            </div>
+        </div>
     </div>
-    <button id="toggleHolidays" style="margin: 10px;">Toggle Holidays</button>
-    <div class="days">
-        <div class="sunday">Sunday</div>
-        <div>Monday</div>
-        <div>Tuesday</div>
-        <div>Wednesday</div>
-        <div>Thursday</div>
-        <div>Friday</div>
-        <div class="saturday">Saturday</div>
+
+    <!-- Modal for Adding and Deleting Classes -->
+    <div id="addClassModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>講義を追加</h2>
+            <label for="className">講義名:</label>
+            <input type="text" id="className"><br>
+            <label for="classUrl">URL:</label>
+            <input type="text" id="classUrl"><br>
+            <label for="weekday">曜日:</label>
+            <select id="weekday">
+                <option value="月曜">月曜</option>
+                <option value="火曜">火曜</option>
+                <option value="水曜">水曜</option>
+                <option value="木曜">木曜</option>
+                <option value="金曜">金曜</option>
+            </select><br>
+            <label for="period">時限:</label>
+            <select id="period">
+                <option value="1限">1限</option>
+                <option value="2限">2限</option>
+                <option value="3限">3限</option>
+                <option value="4限">4限</option>
+                <option value="5限">5限</option>
+            </select><br>
+            <button id="confirmAddClassButton">追加</button>
+        </div>
     </div>
-    <div class="dates" id="dates"></div>
-</div>
 
-<script>
-    // Japanese holidays for 2024
-    const holidays = {
-        '2024-01-01': 'New Year\'s Day',
-        '2024-01-08': 'Coming of Age Day',
-        '2024-02-11': 'National Foundation Day',
-        '2024-02-12': 'National Foundation Day (observed)',
-        '2024-03-20': 'Vernal Equinox Day',
-        '2024-04-29': 'Showa Day',
-        '2024-05-03': 'Constitution Memorial Day',
-        '2024-05-04': 'Greenery Day',
-        '2024-05-05': 'Children\'s Day',
-        '2024-05-06': 'Children\'s Day (observed)',
-        '2024-07-15': 'Marine Day',
-        '2024-08-11': 'Mountain Day',
-        '2024-08-12': 'Mountain Day (observed)',
-        '2024-09-16': 'Respect for the Aged Day',
-        '2024-09-22': 'Autumnal Equinox Day',
-        '2024-10-14': 'Sports Day',
-        '2024-11-03': 'Culture Day',
-        '2024-11-04': 'Culture Day (observed)',
-        '2024-11-23': 'Labor Thanksgiving Day',
-        '2024-12-23': 'Emperor\'s Birthday',
-    };
+    <div id="deleteClassModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>講義を削除</h2>
+            <label for="deleteClassWeekday">曜日:</label>
+            <select id="deleteClassWeekday">
+                <option value="月曜">月曜</option>
+                <option value="火曜">火曜</option>
+                <option value="水曜">水曜</option>
+                <option value="木曜">木曜</option>
+                <option value="金曜">金曜</option>
+            </select><br>
+            <label for="deleteClassPeriod">時限:</label>
+            <select id="deleteClassPeriod">
+                <option value="1限">1限</option>
+                <option value="2限">2限</option>
+                <option value="3限">3限</option>
+                <option value="4限">4限</option>
+                <option value="5限">5限</option>
+            </select><br>
+            <button id="confirmDeleteClassButton">削除</button>
+        </div>
+    </div>
 
-    const today = new Date();
-    let currentYear = today.getFullYear();
-    let currentMonth = today.getMonth(); // 0-based index (Jan = 0)
-    let showHolidays = true; // State to toggle holiday display
+    <script>
+        // カレンダー関連のJavaScript
+        // Get holidays for a given year (excluding equinox days)
+		function getHolidays(year) {
+			return {
+				[`${year}-01-01`]: 'New Year\'s Day',
+				//[`${year}-01-08`]: 'Coming of Age Day',1月第2月曜
+				[`${year}-02-11`]: 'National Foundation Day',
+				[`${year}-02-23`]: 'Emperor\'s Birthday',
+				[`${year}-04-29`]: 'Showa Day',
+				[`${year}-05-03`]: 'Constitution Memorial Day',
+				[`${year}-05-04`]: 'Greenery Day',
+				[`${year}-05-05`]: 'Children\'s Day',
+				//[`${year}-07-15`]: 'Marine Day',7月第3月曜
+				[`${year}-08-11`]: 'Mountain Day',
+				//[`${year}-09-16`]: 'Respect for the Aged Day',9月第3月曜
+				//[`${year}-10-14`]: 'Sports Day',10月第2月曜
+				[`${year}-11-03`]: 'Culture Day',
+				[`${year}-11-23`]: 'Labor Thanksgiving Day',
+			   
+			};
+		}
 
-    function updateCalendar(year, month) {
-        const monthNames = ["January", "February", "March", "April", "May", "June", 
-                            "July", "August", "September", "October", "November", "December"];
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
+		// Initialize holidays for the current and next few years
+		let today = new Date();
+		let currentYear = today.getFullYear();
+		let holidays = getHolidays(currentYear);
+		for (let i = 1; i <= 5; i++) {
+			Object.assign(holidays, getHolidays(currentYear + i));
+		}
 
-        document.getElementById('currentMonthYear').innerText = `${monthNames[month]} ${year}`;
+		let currentMonth = today.getMonth();
+		let showHolidays = true;
+		let selectedDate = ''; // Selected date for note editing
 
-        const datesContainer = document.getElementById('dates');
-        datesContainer.innerHTML = '';  // Clear previous dates
+		function updateCalendar(year, month) {
+			const monthNames = ["January", "February", "March", "April", "May", "June",
+								"July", "August", "September", "October", "November", "December"];
+			const firstDay = new Date(year, month, 1).getDay();
+			const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        // Fill in empty days before the first day of the month
-        for (let i = 0; i < firstDay; i++) {
-            const emptyCell = document.createElement('div');
-            datesContainer.appendChild(emptyCell);
-        }
+			document.getElementById('currentMonthYear').innerText = `${monthNames[month]} ${year}`;
 
-        // Add days of the month
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dateButton = document.createElement('button');
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            
-            dateButton.innerText = day;
+			const datesContainer = document.getElementById('dates');
+			datesContainer.innerHTML = '';
 
-            if (showHolidays && holidays[dateStr]) {
-                dateButton.innerText += ` (${holidays[dateStr]})`;
-                dateButton.classList.add('holiday'); // Holiday color
+			for (let i = 0; i < firstDay; i++) {
+				const emptyCell = document.createElement('div');
+				datesContainer.appendChild(emptyCell);
+			}
+
+			for (let day = 1; day <= daysInMonth; day++) {
+				const dateButton = document.createElement('button');
+				const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+				dateButton.innerText = day;
+
+				if (showHolidays && holidays[dateStr]) {
+					dateButton.innerText += ` (${holidays[dateStr]})`;
+					dateButton.classList.add('holiday');
+				}
+
+				const dayOfWeek = new Date(year, month, day).getDay();
+				if (dayOfWeek === 0) {
+					dateButton.classList.add('sunday');
+				} else if (dayOfWeek === 6) {
+					dateButton.classList.add('saturday');
+				}
+
+				if (year === today.getFullYear() && month === today.getMonth() && day === today.getDate()) {
+					dateButton.classList.add('today');
+				}
+
+				// Display saved note title
+				const savedNote = localStorage.getItem(`${dateStr}-title`);
+				if (savedNote) {
+					const titleDiv = document.createElement('div');
+					titleDiv.style.fontWeight = 'bold';
+					titleDiv.style.marginTop = '5px';
+					titleDiv.innerText = savedNote;
+					dateButton.appendChild(titleDiv);
+				}
+
+				dateButton.addEventListener('click', () => openNoteModal(dateStr));
+
+				datesContainer.appendChild(dateButton);
+			}
+		}
+
+		document.getElementById('prev').addEventListener('click', () => {
+			currentMonth--;
+			if (currentMonth < 0) {
+				currentMonth = 11;
+				currentYear--;
+				holidays = getHolidays(currentYear);
+				for (let i = 1; i <= 5; i++) {
+					Object.assign(holidays, getHolidays(currentYear + i));
+				}
+			}
+			updateCalendar(currentYear, currentMonth);
+		});
+
+		document.getElementById('next').addEventListener('click', () => {
+			currentMonth++;
+			if (currentMonth > 11) {
+				currentMonth = 0;
+				currentYear++;
+				holidays = getHolidays(currentYear);
+				for (let i = 1; i <= 5; i++) {
+					Object.assign(holidays, getHolidays(currentYear + i));
+				}
+			}
+			updateCalendar(currentYear, currentMonth);
+		});
+
+		document.getElementById('toggleHolidays').addEventListener('click', () => {
+			showHolidays = !showHolidays;
+			updateCalendar(currentYear, currentMonth);
+		});
+
+		function openNoteModal(dateStr) {
+			selectedDate = dateStr;
+			document.getElementById('noteTitle').value = localStorage.getItem(`${dateStr}-title`) || '';
+			document.getElementById('noteContent').value = localStorage.getItem(`${dateStr}-content`) || '';
+			document.getElementById('noteModal').style.display = 'flex';
+		}
+
+		document.getElementById('saveNote').addEventListener('click', () => {
+			const title = document.getElementById('noteTitle').value;
+			const content = document.getElementById('noteContent').value;
+			localStorage.setItem(`${selectedDate}-title`, title);
+			localStorage.setItem(`${selectedDate}-content`, content);
+			updateCalendar(currentYear, currentMonth);
+			document.getElementById('noteModal').style.display = 'none';
+		});
+
+		document.getElementById('closeModal').addEventListener('click', () => {
+			document.getElementById('noteModal').style.display = 'none';
+		});
+
+		// Initial calendar update
+		updateCalendar(currentYear, currentMonth);
+
+        // 時間割関連のJavaScript
+        const timetable = document.getElementById('timetable');
+        const addClassButton = document.getElementById('addClassButton');
+        const deleteClassButton = document.getElementById('deleteClassButton');
+        const addClassModal = document.getElementById('addClassModal');
+        const deleteClassModal = document.getElementById('deleteClassModal');
+        const closeButtons = document.querySelectorAll('.close');
+        const confirmAddClassButton = document.getElementById('confirmAddClassButton');
+        const confirmDeleteClassButton = document.getElementById('confirmDeleteClassButton');
+        const memo = document.getElementById('memo');
+
+        // ローカルストレージからデータを読み込み
+        function loadFromLocalStorage() {
+            for (let i = 1; i <= 5; i++) {
+                ['月', '火', '水', '木', '金'].forEach(day => {
+                    const key = `${day}${i}`;
+                    const cell = document.querySelector(`#timetable td[data-key='${key}']`);
+                    const storedValue = localStorage.getItem(key);
+                    if (cell && storedValue) {
+                        cell.innerHTML = storedValue;
+                    }
+                });
             }
+            memo.value = localStorage.getItem('memo') || '';
+        }
 
-            const dayOfWeek = new Date(year, month, day).getDay();
-            if (dayOfWeek === 0) {
-                dateButton.classList.add('sunday'); // Sunday in red
-            } else if (dayOfWeek === 6) {
-                dateButton.classList.add('saturday'); // Saturday in blue
+        // ローカルストレージへデータを保存
+        function saveToLocalStorage() {
+            for (let i = 1; i <= 5; i++) {
+                ['月', '火', '水', '木', '金'].forEach(day => {
+                    const key = `${day}${i}`;
+                    const cell = document.querySelector(`#timetable td[data-key='${key}']`);
+                    if (cell) {
+                        localStorage.setItem(key, cell.innerHTML);
+                    }
+                });
             }
-
-            datesContainer.appendChild(dateButton);
+            localStorage.setItem('memo', memo.value);
         }
-    }
 
-    document.getElementById('prev').addEventListener('click', () => {
-        currentMonth--;
-        if (currentMonth < 0) {
-            currentMonth = 11;
-            currentYear--;
-        }
-        updateCalendar(currentYear, currentMonth);
-    });
+        // 講義の追加
+        confirmAddClassButton.addEventListener('click', () => {
+            const className = document.getElementById('className').value;
+            const classUrl = document.getElementById('classUrl').value;
+            const weekday = document.getElementById('weekday').value;
+            const period = document.getElementById('period').value;
 
-    document.getElementById('next').addEventListener('click', () => {
-        currentMonth++;
-        if (currentMonth > 11) {
-            currentMonth = 0;
-            currentYear++;
-        }
-        updateCalendar(currentYear, currentMonth);
-    });
+            if (className && weekday && period) {
+                const cell = timetable.querySelector(`td[data-key='${weekday}${period.charAt(0)}']`);
+                if (cell) {
+                    cell.innerHTML = `<a href="${classUrl}" target="_blank">${className}</a>`;
+                    saveToLocalStorage();
+                }
+                addClassModal.style.display = 'none';
+            }
+        });
 
-    // Toggle holidays display
-    document.getElementById('toggleHolidays').addEventListener('click', () => {
-        showHolidays = !showHolidays;
-        updateCalendar(currentYear, currentMonth); // Update calendar to reflect change
-    });
+        // 講義の削除
+        confirmDeleteClassButton.addEventListener('click', () => {
+            const weekday = document.getElementById('deleteClassWeekday').value;
+            const period = document.getElementById('deleteClassPeriod').value;
 
-    // Initialize calendar
-    updateCalendar(currentYear, currentMonth);
-</script>
+            const cell = timetable.querySelector(`td[data-key='${weekday}${period.charAt(0)}']`);
+            if (cell) {
+                cell.innerHTML = '';
+                saveToLocalStorage();
+            }
+            deleteClassModal.style.display = 'none';
+        });
 
+        // モーダルの表示と非表示の設定
+        addClassButton.onclick = () => addClassModal.style.display = 'block';
+        deleteClassButton.onclick = () => deleteClassModal.style.display = 'block';
+        closeButtons.forEach(button => button.onclick = () => {
+            addClassModal.style.display = 'none';
+            deleteClassModal.style.display = 'none';
+        });
+
+        // ページ読み込み時にデータをロード
+        window.onload = loadFromLocalStorage;
+
+        // メモの変更時に保存
+        memo.addEventListener('input', saveToLocalStorage);
+    </script>
 </body>
 </html>
